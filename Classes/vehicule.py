@@ -5,13 +5,14 @@ movingGap = 25   # moving gap
 
 
 class Vehicle(pygame.sprite.Sprite):
-    def __init__(self, x: dict[str, list[int]], y: dict[str, list[int]], vehicles: dict, speeds: dict[str, float], mid: dict, stopLines: dict, lane: int, vehicleClass: str, direction_number: int, direction: str, will_turn: int, **args):
+    def __init__(self, x: dict[str, list[int]], y: dict[str, list[int]], vehicles: dict, speeds: dict[str, float], mid: dict, stopLines: dict, lane: int, vehicleClass: str, direction_number: int, direction: str, will_turn: int, *args):
         pygame.sprite.Sprite.__init__(self)
 
         # String Variables
         self.vehicleClass = vehicleClass
         self.direction_number = direction_number
         self.direction = direction
+        self.vehicles = vehicles
         # int Variables
         self.lane = lane
         self.x = x[self.direction][self.lane]
@@ -28,16 +29,15 @@ class Vehicle(pygame.sprite.Sprite):
         self.speed = speeds[vehicleClass]
         # dict
         self.stopLines = stopLines
-        self.simulation = args.simulation
+        self.simulation = args[0]
         self.defaultStop = {'right': 580, 'down': 320, 'left': 810, 'up': 545}
         self.vehiclesNotTurned = {'right': {1: [], 2: []}, 'down': {
             1: [], 2: []}, 'left': {1: [], 2: []}, 'up': {1: [], 2: []}}
-        self.vehicle = vehicles
         self.vehicles[direction][lane].append(self)
         self.mid = mid
         self.crossedIndex = 0
         # image
-        path = f"../images/{direction}/{vehicleClass}.png"
+        path = f"images/{direction}/{vehicleClass}.png"
         self.originalImage = pygame.image.load(path)
         self.image = pygame.image.load(path)
 
