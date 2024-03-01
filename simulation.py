@@ -4,14 +4,27 @@ import threading
 import pygame
 import sys
 import os
+
 # Default values of signal timers
-defaultGreen = {0: 10, 1: 10, 2: 10, 3: 10}
+defaultGreen = {
+    0: 10,
+    1: 10,
+    2: 10,
+    3: 10
+}
+# Default red signal time
 defaultRed = 150
+# Default yellow signal time
 defaultYellow = 5
 
+# Signals list
 signals = []
+
+# Number of signals
 noOfSignals = 4
-currentGreen = 0   # Indicates which signal is green currently
+
+# Indicates which signal is green currently
+currentGreen = 0
 
 # Indicates which signal will turn green next
 nextGreen = (currentGreen+1) % noOfSignals
@@ -20,8 +33,12 @@ nextGreen = (currentGreen+1) % noOfSignals
 currentYellow = 0
 
 # average speeds of vehicles
-speeds = {'car': 2.25, 'bus': 1.8, 'truck': 1.8,
-          'bike': 2.5}
+speeds = {
+    'car': 2.25,
+    'bus': 1.8,
+    'truck': 1.8,
+    'bike': 2.5
+}
 
 # Coordinates of vehicles' start
 x = {
@@ -121,13 +138,14 @@ class TrafficSignal:
     """
     La clase `TrafficSignal` en Python representa una señal de tráfico con duraciones de luz roja,
     amarilla y verde.
-    
+
     """
-    def __init__(self, red:int, yellow:int, green:int):
+
+    def __init__(self, red: int, yellow: int, green: int):
         """
         Esta función de Python inicializa un objeto con valores enteros para rojo, amarillo y verde, junto
         con una cadena vacía para signalText.
-        
+
         """
         self.red = red
         self.yellow = yellow
@@ -140,10 +158,10 @@ class Vehicle(pygame.sprite.Sprite):
         """
         Esta función inicializa un objeto de vehículo con atributos y coordenadas específicos según la
         dirección y el carril.
-        
+
         :param `lane` int: 
             Representa el carril en el que se encuentra el vehículo. 
-        
+
         :param `vehicleClass` str:
             Representa la clase o tipodel vehículo que se está inicializando. 
 
@@ -222,7 +240,7 @@ class Vehicle(pygame.sprite.Sprite):
         """
         La función `render` en Python toma un parámetro de `pantalla` y borra la `imagen` en las coordenadas
         `(x, y)`.
-        
+
         :param screen: 
             Este parámetro se utiliza con el método `blit`
             para dibujar la imagen en las coordenadas especificadas `(self.x, self.y)` en la pantalla
@@ -609,8 +627,6 @@ def repeat():
     repeat()
 
 
-
-
 # Update values of the signal timers after every second
 def updateValues():
     """
@@ -711,10 +727,10 @@ class Main:
     font = pygame.font.Font(None, 30)
 
     # threads (hilos de ejecucion) for generating vehicles and time of simulation
-    
+
     # Generating vehicles
     thread2 = threading.Thread(
-        name="generateVehicles", target=generateVehicles, args=())    
+        name="generateVehicles", target=generateVehicles, args=())
     thread2.daemon = True
     thread2.start()
 
@@ -730,7 +746,7 @@ class Main:
                 sys.exit()
 
         screen.blit(background, (0, 0))   # display background in simulation
-        
+
         # display signal and set timer according to current status: green, yello, or red
         for i in range(0, noOfSignals):
             if (i == currentGreen):
