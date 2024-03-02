@@ -5,34 +5,34 @@ import pygame
 import sys
 import os
 
-# Default values of signal timers
+# Valores predeterminados de los temporizadores de señaltemporizadores de señal
 defaultGreen = {
     0: 10,
     1: 10,
     2: 10,
     3: 10
 }
-# Default red signal time
+# Tiempo de señal roja predeterminadoedeterminado
 defaultRed = 150
-# Default yellow signal time
+# Tiempo de señal amarilla predeterminadoredeterminado
 defaultYellow = 5
 
-# Signals list
+# Lista de señalesales
 signals = []
 
-# Number of signals
+# Número de señales
 noOfSignals = 4
 
-# Indicates which signal is green currently
+# Indica qué señal es verde actualmente
 currentGreen = 0
 
-# Indicates which signal will turn green next
+# Indica qué señal se volverá verde a continuaciónación
 nextGreen = (currentGreen+1) % noOfSignals
 
-# Indicates whether yellow signal is on or off
+# Indica si la señal amarilla está encendida o apagada apagada
 currentYellow = 0
 
-# average speeds of vehicles
+# velocidades promedio de vehículoshículos
 speeds = {
     'car': 2.25,
     'bus': 1.8,
@@ -40,7 +40,7 @@ speeds = {
     'bike': 2.5
 }
 
-# Coordinates of vehicles' start
+# Coordenadas del comienzo de los vehículoss vehículos
 x = {
     'right': [0, 0, 0],
     'down': [755, 727, 697],
@@ -55,7 +55,7 @@ y = {
     'up': [800, 800, 800]
 }
 
-# Caracteristic vehicles
+# Vehículos característicoscos
 vehicles = {
     'right': {0: [], 1: [], 2: [], 'crossed': 0},
     'down': {0: [], 1: [], 2: [], 'crossed': 0},
@@ -65,24 +65,27 @@ vehicles = {
 
 vehicleTypes = {0: 'car', 1: 'bus', 2: 'truck', 3: 'bike'}
 
-# Directions
+# Direccioness
 directionNumbers = {0: 'right', 1: 'down', 2: 'left', 3: 'up'}
 
-# Coordinates of signal image, timer, and vehicle count
+# Coordenadas de imagen de señal, temporizador y recuento de vehículos
 signalCoods = [(530, 230), (810, 230), (810, 570), (530, 570)]
 signalTimerCoods = [(530, 210), (810, 210), (810, 550), (530, 550)]
 
-# Coordinates of stop lines
+# Coordenadas de líneas de parada
 stopLines = {'right': 590, 'down': 330, 'left': 800, 'up': 535}
 defaultStop = {'right': 580, 'down': 320, 'left': 810, 'up': 545}
 
-# Gap between vehicles
-stoppingGap = 25    # stopping gap
-movingGap = 25   # moving gap
+# Brecha entre vehículos
+stoppingGap = 25    # brecha de parada
+movingGap = 25   # brecha móvil
 
-# set allowed vehicle types here
+# tipos de vehículos permitidos
 allowedVehicleTypes = {'car': True, 'bus': True, 'truck': True, 'bike': True}
+
+# Lista de tipos de vehículos permitidos
 allowedVehicleTypesList = []
+
 vehiclesTurned = {
     'right': {1: [], 2: []},
     'down': {1: [], 2: []},
@@ -107,10 +110,8 @@ mid = {
     'up': {'x': 695, 'y': 400}
 }
 
-# set random or default green signal time here
+# señal verde aleatorio
 randomGreenSignalTimer = True
-# set random green signal time range here
-randomGreenSignalTimerRange = [10, 20]
 
 
 # `timeElapsed` es una variable que lleva la cuenta del tiempo transcurrido en la simulación.
@@ -530,16 +531,17 @@ class Vehicle(pygame.sprite.Sprite):
         }
         directios[self.direction]()
 
+
+
+
 # Initialization of signals with default values
-
-
 def initialize():
     """
     Esta función inicializa las señales de tráfico con valores aleatorios o predeterminados del
     temporizador de señal verde.
     """
-    minTime = randomGreenSignalTimerRange[0]
-    maxTime = randomGreenSignalTimerRange[1]
+    minTime = 10
+    maxTime = 20
     if (randomGreenSignalTimer):
         ts1 = TrafficSignal(0, defaultYellow, random.randint(minTime, maxTime))
         signals.append(ts1)
@@ -562,28 +564,29 @@ def initialize():
         signals.append(ts3)
         ts4 = TrafficSignal(defaultRed, defaultYellow, defaultGreen[3])
         signals.append(ts4)
+
     repeat()
 
-# Print the signal timers on cmd
-
-
-def printStatus():
+# Print the signal timers on Console
+def print_traffic_signal_status():
     """
-    Esta función recorre en iteración una lista de señales e imprime su estado según su color y estado
-    actual.
+    Esta función imprime el estado de cada señal de tráfico en la simulación.
+    Recorre en iteración una lista de señales e imprime su estado según su color y estado actual.
     """
-    for i in range(0, 4):
-        if (signals[i] != None):
-            if (i == currentGreen):
-                if (currentYellow == 0):
-                    print(" GREEN TS", i+1, "-> r:",
-                          signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
-                else:
-                    print("YELLOW TS", i+1, "-> r:",
-                          signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
+    for i in range(4):
+        if signals[i] is not None:
+            signal = signals[i]
+            signal_number = i + 1
+
+            # color actual de la señal y para consola
+            if i == currentGreen:
+                color = "YELLOW" if currentYellow == 1 else "GREEN"
             else:
-                print("   RED TS", i+1, "-> r:",
-                      signals[i].red, " y:", signals[i].yellow, " g:", signals[i].green)
+                color = "RED"
+
+            print(
+                f"{color} TS{signal_number} -> r:{signal.red} y:{signal.yellow} g:{signal.green}")
+
     print()
 
 
@@ -593,37 +596,44 @@ def repeat():
     señales verdes, amarillas y rojas en un bucle.
     """
     global currentGreen, currentYellow, nextGreen
-    # while the timer of current green signal is not zero
+    # mientras que el temporizador de la señal verde actual no es cero
     while (signals[currentGreen].green > 0):
-        printStatus()
+        print_traffic_signal_status()
         updateValues()
         time.sleep(1)
+
     currentYellow = 1   # set yellow signal on
-    # reset stop coordinates of lanes and vehicles
+
+    # Restablecer coordenadas de paradas de carriles y vehículos
     for i in range(0, 3):
         for vehicle in vehicles[directionNumbers[currentGreen]][i]:
             vehicle.stop = defaultStop[directionNumbers[currentGreen]]
-    # while the timer of current yellow signal is not zero
+
+    # mientras que el temporizador de la señal amarilla actual no es cero
     while (signals[currentGreen].yellow > 0):
-        printStatus()
+        print_traffic_signal_status()
         updateValues()
         time.sleep(1)
-    currentYellow = 0   # set yellow signal off
 
-    # reset all signal times of current signal to default/random times
+    currentYellow = 0   # Ajuste la señal amarilla
+
+    # Restablecer todos los tiempos de señal de la señal de corriente a tiempos predeterminados/aleatorios
     if (randomGreenSignalTimer):
-        signals[currentGreen].green = random.randint(
-            randomGreenSignalTimerRange[0], randomGreenSignalTimerRange[1])
+        signals[currentGreen].green = random.randint(10, 20)
     else:
         signals[currentGreen].green = defaultGreen[currentGreen]
+    
     signals[currentGreen].yellow = defaultYellow
     signals[currentGreen].red = defaultRed
 
-    currentGreen = nextGreen  # set next signal as green signal
-    nextGreen = (currentGreen+1) % noOfSignals    # set next green signal
-    # set the red time of next to next signal as (yellow time + green time) of next signal
+    currentGreen = nextGreen  # la siguiente señal como señal verde
+
+    nextGreen = (currentGreen+1) % noOfSignals    # next green signal
+
+    # tiempo de señal roja de la siguiente señal de siguiente como (tiempo amarillo + tiempo verde) de la siguiente señal
     signals[nextGreen].red = signals[currentGreen].yellow + \
         signals[currentGreen].green
+
     repeat()
 
 
@@ -651,15 +661,20 @@ def generateVehicles():
     """
     while True:
         vehicle_type = random.choice(allowedVehicleTypesList)
+
         lane_number = random.randint(1, 2)
+
         will_turn = random.randint(0, 99) < 40 if lane_number in [1, 2] else 0
 
+        # Seleccion aleatoria de dirección para el vehículo
         temp = random.randint(0, 99)
         dist = [25, 50, 75, 100]
         direction_number = next(i for i, val in enumerate(dist) if temp < val)
 
+        # instacia de vehiculo
         Vehicle(lane_number, vehicleTypes[vehicle_type], direction_number,
                 directionNumbers[direction_number], will_turn)
+
         time.sleep(1)
 
 
@@ -672,8 +687,8 @@ def showStats():
     print('Direction-wise Vehicle Counts')
     for i in range(0, 4):
         if (signals[i] != None):
-            print('Direction', i+1, ':',
-                  vehicles[directionNumbers[i]]['crossed'])
+            print(
+                f"Direction {i+1}: {vehicles[directionNumbers[i]]['crossed']} vehicles crossed")
             totalVehicles += vehicles[directionNumbers[i]]['crossed']
     print('Total vehicles passed:', totalVehicles)
     print('Total time:', timeElapsed)
@@ -730,15 +745,23 @@ class Main:
 
     # Generating vehicles
     thread2 = threading.Thread(
-        name="generateVehicles", target=generateVehicles, args=())
+        name="generateVehicles",
+        target=generateVehicles,
+        args=()
+    )
     thread2.daemon = True
     thread2.start()
 
     # Time of simulation
-    thread3 = threading.Thread(name="simTime", target=simTime, args=())
+    thread3 = threading.Thread(
+        name="simTime",
+        target=simTime,
+        args=()
+    )
     thread3.daemon = True
     thread3.start()
 
+    # Main loop (while mientras el programa este corriendo)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -767,19 +790,31 @@ class Main:
         # display signal timer
         for i in range(0, noOfSignals):
             signalTexts[i] = font.render(
-                str(signals[i].signalText), True, white, black)
+                str(signals[i].signalText),
+                True,
+                white,
+                black
+            )
             screen.blit(signalTexts[i], signalTimerCoods[i])
 
         # display vehicle count
         for i in range(0, noOfSignals):
             displayText = vehicles[directionNumbers[i]]['crossed']
             vehicleCountTexts[i] = font.render(
-                str(displayText), True, black, white)
+                str(displayText),
+                True,
+                black,
+                white
+            )
             screen.blit(vehicleCountTexts[i], vehicleCountCoods[i])
 
         # display time elapsed
         timeElapsedText = font.render(
-            ("Time Elapsed: "+str(timeElapsed)), True, black, white)
+            (f"Time Elapsed: {str(timeElapsed)}"),
+            True,
+            black,
+            white
+        )
         screen.blit(timeElapsedText, timeElapsedCoods)
 
         # display the vehicles
