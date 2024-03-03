@@ -17,7 +17,7 @@ defaultRed = 150
 # Tiempo de señal amarilla predeterminadoredeterminado
 defaultYellow = 5
 
-# Lista de señalesales
+# Lista de señales
 signals = []
 
 # Número de señales
@@ -32,7 +32,7 @@ nextGreen = (currentGreen+1) % noOfSignals
 # Indica si la señal amarilla está encendida o apagada apagada
 currentYellow = 0
 
-# velocidades promedio de vehículoshículos
+# velocidades promedio de vehículos en px/s to mts/s
 speeds = {
     'car': 2.25,
     'bus': 1.8,
@@ -200,9 +200,11 @@ class Vehicle(pygame.sprite.Sprite):
         self.image_height = self.image.get_rect().height
 
         # Set stopping coordinate
+        # Si hay más de un vehículo en el carril y el vehículo anterior no ha cruzado la línea de parada
         if (len(vehicles[direction][lane]) > 1 and previousVehicle.crossed == 0):
             width = previousVehicle.image.get_rect().width
             height = previousVehicle.image.get_rect().height
+            # Establecer la coordenada de parada del vehículo actual en función de la dirección
             if (direction == 'right'):
                 self.stop = previousVehicle.stop
                 - width
@@ -568,6 +570,7 @@ def initialize():
     repeat()
 
 # Print the signal timers on Console
+
 def print_traffic_signal_status():
     """
     Esta función imprime el estado de cada señal de tráfico en la simulación.
@@ -662,8 +665,10 @@ def generateVehicles():
     while True:
         vehicle_type = random.choice(allowedVehicleTypesList)
 
+        # Seleccion aleatoria de carril para el vehículo
         lane_number = random.randint(1, 2)
 
+        # Seleccion aleatoria de giro para el vehículo
         will_turn = random.randint(0, 99) < 40 if lane_number in [1, 2] else 0
 
         # Seleccion aleatoria de dirección para el vehículo
@@ -675,7 +680,7 @@ def generateVehicles():
         Vehicle(lane_number, vehicleTypes[vehicle_type], direction_number,
                 directionNumbers[direction_number], will_turn)
 
-        time.sleep(1)
+        time.sleep(0.1)
 
 
 def showStats():
@@ -711,10 +716,14 @@ def simTime():
 class Main:
     global allowedVehicleTypesList
     i = 0
+    # El código itera sobre un diccionario "allowedVehicleTypes" y verifica si el valor de cada clave es
+    # Verdadero. Si el valor es Verdadero, agrega la clave correspondiente a `allowedVehicleTypesList`.
     for vehicleType in allowedVehicleTypes:
         if (allowedVehicleTypes[vehicleType]):
             allowedVehicleTypesList.append(i)
         i += 1
+    
+    # Inicialización de la simulación
     thread1 = threading.Thread(
         name="initialization", target=initialize, args=())    # initialization
     thread1.daemon = True
@@ -753,6 +762,7 @@ class Main:
     thread2.start()
 
     # Time of simulation
+    # FISCAL DE TRANSITO
     thread3 = threading.Thread(
         name="simTime",
         target=simTime,
@@ -783,7 +793,7 @@ class Main:
                 if (signals[i].red <= 10):
                     signals[i].signalText = signals[i].red
                 else:
-                    signals[i].signalText = "---"
+                    signals[i].signalText = "STOP"
                 screen.blit(redSignal, signalCoods[i])
         signalTexts = ["", "", "", ""]
 
@@ -798,6 +808,7 @@ class Main:
             screen.blit(signalTexts[i], signalTimerCoods[i])
 
         # display vehicle count
+        # ver cuantos vehiculos han cruzado
         for i in range(0, noOfSignals):
             displayText = vehicles[directionNumbers[i]]['crossed']
             vehicleCountTexts[i] = font.render(
@@ -809,6 +820,7 @@ class Main:
             screen.blit(vehicleCountTexts[i], vehicleCountCoods[i])
 
         # display time elapsed
+        # ver tiempo de simulacion
         timeElapsedText = font.render(
             (f"Time Elapsed: {str(timeElapsed)}"),
             True,
@@ -818,6 +830,8 @@ class Main:
         screen.blit(timeElapsedText, timeElapsedCoods)
 
         # display the vehicles
+        # aqui es donde se determina al vehiculo 
+        # que se mueva en alguna direccion
         for vehicle in simulation:
             screen.blit(vehicle.image, [vehicle.x, vehicle.y])
             vehicle.move()
