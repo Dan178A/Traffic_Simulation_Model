@@ -680,7 +680,7 @@ def generateVehicles():
         Vehicle(lane_number, vehicleTypes[vehicle_type], direction_number,
                 directionNumbers[direction_number], will_turn)
 
-        time.sleep(0.1)
+        time.sleep(0.8)
 
 
 def showStats():
