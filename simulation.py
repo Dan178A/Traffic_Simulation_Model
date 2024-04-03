@@ -1,3 +1,4 @@
+import math
 import random
 import time
 import threading
@@ -41,18 +42,35 @@ speeds = {
 }
 
 # Coordenadas del comienzo de los vehículoss vehículos
+
+# custom
+# x = {
+#  'right': [0, 69, 56],
+#  'down': [759, 790, 816],
+#  'left': [1400, 1367, 1352],
+#  'up': [602, 506, 537]
+# }
+
+# y = {
+#  'right': [0, 0, 25],
+#  'down': [0, 0, 11],
+#  'left': [498, 553, 581],
+#  'up': [855, 855, 866]
+# }
+
+# original
 x = {
-    'right': [0, 0, 0],
-    'down': [755, 727, 697],
-    'left': [1400, 1400, 1400],
-    'up': [602, 627, 657]
+ 'right': [0, 0, 0],
+ 'down': [755, 727, 697],
+ 'left': [1400, 1400, 1400],
+ 'up': [602, 627, 657]
 }
 
 y = {
-    'right': [348, 370, 398],
-    'down': [0, 0, 0],
-    'left': [498, 466, 436],
-    'up': [800, 800, 800]
+ 'right': [348, 370, 398],
+ 'down': [0, 0, 0],
+ 'left': [498, 466, 436],
+ 'up': [800, 800, 800]
 }
 
 # Vehículos característicoscos
@@ -69,8 +87,11 @@ vehicleTypes = {0: 'car', 1: 'bus', 2: 'truck', 3: 'bike'}
 directionNumbers = {0: 'right', 1: 'down', 2: 'left', 3: 'up'}
 
 # Coordenadas de imagen de señal, temporizador y recuento de vehículos
+# signalCoods = [(608, 99), (886, 204), (479, 380), (824, 536)]
+# signalTimerCoods = [(608, 79), (886, 184), (479, 360), (824, 516)]
 signalCoods = [(530, 230), (810, 230), (810, 570), (530, 570)]
 signalTimerCoods = [(530, 210), (810, 210), (810, 550), (530, 550)]
+signal_rotation = [0, 0, -0, 0] # rotación de la señal
 
 # Coordenadas de líneas de parada
 stopLines = {'right': 590, 'down': 330, 'left': 800, 'up': 535}
@@ -128,6 +149,7 @@ vehicleCountTexts = ["0", "0", "0", "0"]
 
 # `vehicleCountCoods` son las coordenadas en la pantalla donde se mostrará el recuento de vehículos para cada dirección.
 vehicleCountCoods = [(480, 210), (880, 210), (880, 550), (480, 550)]
+# vehicleCountCoods = [(558, 79), (956, 184), (439, 360), (810, 516)]
 
 # peak hour
 peakHour = False
@@ -195,8 +217,10 @@ class Vehicle(pygame.sprite.Sprite):
         self.crossedIndex = 0
         # path of vehicle image
         path = f"images/{direction}/{vehicleClass}.png"
-        self.originalImage = pygame.image.load(path)
-        self.image = pygame.image.load(path)
+        originalImage = pygame.image.load(path)
+        image = pygame.image.load(path)
+        self.originalImage = pygame.transform.rotate(originalImage,0)
+        self.image = pygame.transform.rotate(image,0)
         previousVehicle = vehicles[direction][lane][self.index-1]
         self.image_width = self.image.get_rect().width
         self.image_height = self.image.get_rect().height
@@ -344,6 +368,7 @@ class Vehicle(pygame.sprite.Sprite):
         Esta función controla el movimiento de los vehículos en una simulación, incluido el manejo de cruces
         de intersecciones y giros.
         """
+
         if (self.crossed == 0 and self.y+self.image_height > stopLines[self.direction]):
             self.crossed = 1
             vehicles[self.direction]['crossed'] += 1
@@ -405,6 +430,7 @@ class Vehicle(pygame.sprite.Sprite):
         Esta función define el comportamiento de movimiento de un objeto de vehículo en una simulación,
         incluidas las condiciones para girar y cambiar de carril.
         """
+
         if (self.crossed == 0 and self.x < stopLines[self.direction]):
             self.crossed = 1
             vehicles[self.direction]['crossed'] += 1
@@ -799,13 +825,13 @@ class Main:
     button_image2 = pygame.image.load('images/buttons/buttonStop3_small.png')
 
     # Coordenadas del botón (parte superior izquierda de la pantalla)
-    button_rect = button_image1.get_rect(topleft=(0, 0))
+    button_rect = button_image1.get_rect(topleft=(screenWidth - button_image1.get_width(), 0))
 
     # Estado del botón
     button_state = 0
 
     # Setting background image i.e. image of intersection
-    background = pygame.image.load('images/intersection.png')
+    background = pygame.image.load('images/Av_casanovaV2.png')
 
     screen = pygame.display.set_mode(screenSize)
     pygame.display.set_caption("SIMULATION")
@@ -819,7 +845,7 @@ class Main:
     # threads (hilos de ejecucion) for generating vehicles and time of simulation
 
     # Generating vehicles
-    # Thread_generate_vehicle()
+    Thread_generate_vehicle()
 
     # Time of simulation
     # FISCAL DE TRANSITO
@@ -830,6 +856,8 @@ class Main:
     )
     thread3.daemon = True
     thread3.start()
+    def rotate(image, angle: float):
+        return pygame.transform.rotate(image, angle)
 
     # Main loop (while mientras el programa este corriendo)
     while True:
@@ -845,10 +873,10 @@ class Main:
                     # Ejecutar la función
                     if button_state == 1:
                         peakHour = True
-                        # Thread_generate_traffic()
+                        Thread_generate_traffic()
                     else:
                         peakHour = False
-                        # Thread_generate_vehicle()
+                        Thread_generate_vehicle()
 
         screen.blit(background, (0, 0))   # display background in simulation
         # Mostrar el botón correcto según el estado
@@ -859,21 +887,23 @@ class Main:
             # display the button
             screen.blit(button_image2, button_rect.topleft)
 
+
+
         # display signal and set timer according to current status: green, yello, or red
         for i in range(0, noOfSignals):
             if (i == currentGreen):
                 if (currentYellow == 1):
                     signals[i].signalText = signals[i].yellow
-                    screen.blit(yellowSignal, signalCoods[i])
+                    screen.blit(rotate(yellowSignal,signal_rotation[i]), signalCoods[i])
                 else:
                     signals[i].signalText = signals[i].green
-                    screen.blit(greenSignal, signalCoods[i])
+                    screen.blit(rotate(greenSignal,signal_rotation[i]), signalCoods[i])
             else:
                 if (signals[i].red <= 10):
                     signals[i].signalText = signals[i].red
                 else:
                     signals[i].signalText = "STOP"
-                screen.blit(redSignal, signalCoods[i])
+                screen.blit(rotate(redSignal,signal_rotation[i]), signalCoods[i])
         signalTexts = ["", "", "", ""]
 
         # display signal timer
