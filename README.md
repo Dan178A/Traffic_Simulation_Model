@@ -37,13 +37,25 @@ Necesitas:
 
 ## Usage
 
-Run The file:
+### Run The file:
 
 ```shell
     python simulation.py
 ```
 
-Hora Pico:
-para 
+[Tiempo de simulacion](simulation.py) (Linea: 132):
+```python
+# `simulationTime` es la duración total de la simulación.
+simulationTime = 300
+```
 
+### Hora Pico:
+
+>Disabled:
+
+![sin hora pico](./images/buttons/buttonGo_small.png)
+
+>Enabled:
+
+![con hora pico](./images/buttons/buttonStop3_small.png)
 
