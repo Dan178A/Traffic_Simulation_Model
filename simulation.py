@@ -43,34 +43,21 @@ speeds = {
 
 # Coordenadas del comienzo de los vehículoss vehículos
 
-# custom
-# x = {
-#  'right': [0, 69, 56],
-#  'down': [759, 790, 816],
-#  'left': [1400, 1367, 1352],
-#  'up': [602, 506, 537]
-# }
-
-# y = {
-#  'right': [0, 0, 25],
-#  'down': [0, 0, 11],
-#  'left': [498, 553, 581],
-#  'up': [855, 855, 866]
-# }
-
 # original
 x = {
  'right': [0, 0, 0],
  'down': [755, 727, 697],
  'left': [1400, 1400, 1400],
- 'up': [602, 627, 657]
+ 'up': [602, 627, 657],
+ 'vertical': [800, 800, 800]
 }
 
 y = {
  'right': [348, 370, 398],
  'down': [0, 0, 0],
  'left': [498, 466, 436],
- 'up': [800, 800, 800]
+ 'up': [800, 800, 800],
+ 'vertical': [800, 800, 800]
 }
 
 # Vehículos característicoscos
@@ -78,7 +65,8 @@ vehicles = {
     'right': {0: [], 1: [], 2: [], 'crossed': 0},
     'down': {0: [], 1: [], 2: [], 'crossed': 0},
     'left': {0: [], 1: [], 2: [], 'crossed': 0},
-    'up': {0: [], 1: [], 2: [], 'crossed': 0}
+    'up': {0: [], 1: [], 2: [], 'crossed': 0},
+    'vertical': {0: [], 1: [], 2: [], 'crossed': 0}
 }
 
 vehicleTypes = {0: 'car', 1: 'bus', 2: 'truck', 3: 'bike'}
@@ -89,13 +77,13 @@ directionNumbers = {0: 'right', 1: 'down', 2: 'left', 3: 'up'}
 # Coordenadas de imagen de señal, temporizador y recuento de vehículos
 # signalCoods = [(608, 99), (886, 204), (479, 380), (824, 536)]
 # signalTimerCoods = [(608, 79), (886, 184), (479, 360), (824, 516)]
-signalCoods = [(530, 230), (810, 230), (810, 570), (530, 570)]
-signalTimerCoods = [(530, 210), (810, 210), (810, 550), (530, 550)]
+signalCoods = [(530, 230), (810, 230), (1000, 570), (530, 570)]
+signalTimerCoods = [(530, 210), (810, 210), (1000, 550), (530, 550)]
 signal_rotation = [0, 0, -0, 0] # rotación de la señal
 
 # Coordenadas de líneas de parada
-stopLines = {'right': 590, 'down': 330, 'left': 800, 'up': 535}
-defaultStop = {'right': 580, 'down': 320, 'left': 810, 'up': 545}
+stopLines = {'right': 590, 'down': 330, 'left': 800, 'up': 535,'vertical':535}
+defaultStop = {'right': 580, 'down': 320, 'left': 810, 'up': 545,'vertical':545}
 
 # Brecha entre vehículos
 stoppingGap = 25    # brecha de parada
@@ -111,13 +99,15 @@ vehiclesTurned = {
     'right': {1: [], 2: []},
     'down': {1: [], 2: []},
     'left': {1: [], 2: []},
-    'up': {1: [], 2: []}
+    'up': {1: [], 2: []},
+    'vertical': {1: [], 2: []}
 }
 vehiclesNotTurned = {
     'right': {1: [], 2: []},
     'down': {1: [], 2: []},
     'left': {1: [], 2: []},
-    'up': {1: [], 2: []}
+    'up': {1: [], 2: []},
+    'vertical': {1: [], 2: []}
 }
 rotationAngle = 3
 
@@ -128,7 +118,8 @@ mid = {
     'right': {'x': 705, 'y': 445},
     'down': {'x': 695, 'y': 450},
     'left': {'x': 695, 'y': 425},
-    'up': {'x': 695, 'y': 400}
+    'up': {'x': 695, 'y': 400},
+    'vertical': {'x': 695, 'y': 425}
 }
 
 # señal verde aleatorio
@@ -148,7 +139,7 @@ timeElapsedCoods = (1100, 50)
 vehicleCountTexts = ["0", "0", "0", "0"]
 
 # `vehicleCountCoods` son las coordenadas en la pantalla donde se mostrará el recuento de vehículos para cada dirección.
-vehicleCountCoods = [(480, 210), (880, 210), (880, 550), (480, 550)]
+vehicleCountCoods = [(480, 210), (880, 210), (1100, 550), (480, 550)]
 # vehicleCountCoods = [(558, 79), (956, 184), (439, 360), (810, 516)]
 
 # peak hour
