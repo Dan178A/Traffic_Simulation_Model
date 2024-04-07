@@ -6,6 +6,8 @@ import sys
 import os
 from module.Result import Presentation_Result
 
+# Run the simulation
+run_simulation = True
 # Valores predeterminados de los temporizadores de señaltemporizadores de señal
 defaultGreen = {
     0: 10,
@@ -60,7 +62,7 @@ y = {
  'vertical': [800, 800, 800]
 }
 
-# Vehículos característicoscos
+# Vehículos característicos
 vehicles = {
     'right': {0: [], 1: [], 2: [], 'crossed': 0},
     'down': {0: [], 1: [], 2: [], 'crossed': 0},
@@ -75,8 +77,6 @@ vehicleTypes = {0: 'car', 1: 'bus', 2: 'truck', 3: 'bike'}
 directionNumbers = {0: 'right', 1: 'down', 2: 'left', 3: 'up'}
 
 # Coordenadas de imagen de señal, temporizador y recuento de vehículos
-# signalCoods = [(608, 99), (886, 204), (479, 380), (824, 536)]
-# signalTimerCoods = [(608, 79), (886, 184), (479, 360), (824, 516)]
 signalCoods = [(530, 230), (810, 230), (1000, 570), (530, 570)]
 signalTimerCoods = [(530, 210), (810, 210), (1000, 550), (530, 550)]
 signal_rotation = [0, 0, -0, 0] # rotación de la señal
@@ -133,7 +133,7 @@ timeElapsed = 0
 simulationTime = 300
 
 # `timeElapsedCoods` son las coordenadas en la pantalla donde se mostrará el tiempo transcurrido.
-timeElapsedCoods = (1100, 50)
+timeElapsedCoods = (1000, 50)
 
 # `vehicleCountTexts` es una lista que contiene el número de vehículos en cada dirección como cadenas de texto.
 vehicleCountTexts = ["0", "0", "0", "0"]
@@ -145,9 +145,15 @@ vehicleCountCoods = [(480, 210), (880, 210), (1100, 550), (480, 550)]
 # peak hour
 peakHour = False
 
+# simulation_vehicle
+simulation_vehicle = []
+
 # Pygame initialization
 pygame.init()
 simulation = pygame.sprite.Group()
+
+# Presentation_Result
+presentation_result = Presentation_Result(tiempo_simulacion=simulationTime)
 
 
 class TrafficSignal:
@@ -681,7 +687,10 @@ def generateVehicles():
     probabilidades de giro e indicaciones para crear vehículos en intervalos de 1 segundo.
     """
     global peakHour
+    global run_simulation
     while peakHour == False:
+        if run_simulation == False:
+            break
         print("Vehicles are generating", peakHour)  
         vehicle_type = random.choice(allowedVehicleTypesList)
 
@@ -702,6 +711,34 @@ def generateVehicles():
 
         time.sleep(0.8)
 
+def Traffic_generate():
+    """
+    La función `Traffic_generate` en Python imprime un mensaje en la consola cuando se presiona el botón.
+    """
+    global peakHour
+    global run_simulation
+    while peakHour:
+        if run_simulation == False:
+            break
+        print("Traffic is generating", peakHour)
+        vehicle_type = random.choice(allowedVehicleTypesList)
+
+        # Seleccion aleatoria de carril para el vehículo
+        lane_number = random.randint(1, 2)
+
+        # Seleccion aleatoria de giro para el vehículo
+        will_turn = random.randint(0, 99) < 40 if lane_number in [1, 2] else 0
+
+        # Seleccion aleatoria de dirección para el vehículo
+        temp = random.randint(0, 99)
+        dist = [25, 50, 75, 100]
+        direction_number = next(i for i, val in enumerate(dist) if temp < val)
+
+        # instacia de vehiculo
+        Vehicle(lane_number, vehicleTypes[vehicle_type], direction_number,
+                directionNumbers[direction_number], will_turn)
+
+        time.sleep(0.1)
 
 def showStats():
     """
@@ -724,40 +761,17 @@ def simTime():
     La función `simTime` incrementa `timeElapsed` en 1 cada segundo hasta llegar a `simulationTime`,
     momento en el que muestra estadísticas y sale del programa.
     """
-    global timeElapsed, simulationTime
+    global timeElapsed, simulationTime, run_simulation
     while (True):
         timeElapsed += 1
         time.sleep(1)
         if (timeElapsed == simulationTime):
             showStats()
-            os._exit(1)
-
-
-def Traffic_generate():
-    """
-    La función `Traffic_generate` en Python imprime un mensaje en la consola cuando se presiona el botón.
-    """
-    global peakHour
-    while peakHour:
-        print("Traffic is generating", peakHour)
-        vehicle_type = random.choice(allowedVehicleTypesList)
-
-        # Seleccion aleatoria de carril para el vehículo
-        lane_number = random.randint(1, 2)
-
-        # Seleccion aleatoria de giro para el vehículo
-        will_turn = random.randint(0, 99) < 40 if lane_number in [1, 2] else 0
-
-        # Seleccion aleatoria de dirección para el vehículo
-        temp = random.randint(0, 99)
-        dist = [25, 50, 75, 100]
-        direction_number = next(i for i, val in enumerate(dist) if temp < val)
-
-        # instacia de vehiculo
-        Vehicle(lane_number, vehicleTypes[vehicle_type], direction_number,
-                directionNumbers[direction_number], will_turn)
-
-        time.sleep(0.1)
+            run_simulation = False
+            try:
+                os._exit(1)
+            finally:
+                show_results()
 
 def Thread_generate_traffic():
     """
@@ -785,9 +799,45 @@ def Thread_generate_vehicle():
     thread2.start()
 
 
+def show_results():
+    """
+    La función `show_results` en Python imprime un mensaje en la consola cuando se presiona el botón.
+    """
+    
+    copy_simulation_vehicle = simulation_vehicle.copy()
+    if len(copy_simulation_vehicle) >= 2:
+        # Obtiene un índice aleatorio para 'lider' (excluyendo el primer elemento)
+        lider = random.randint(1, len(copy_simulation_vehicle) - 1)
+        # Obtiene 'seguidor' como el índice anterior a 'lider'
+        seguidor = lider - 1
+        type_vehicle = random.choice(allowedVehicleTypesList)
+
+        # Presentacion de resultados
+        # thread = threading.Thread(target=presentation_result.exec_all_plots, kwargs={
+        #     'simulation_vehicle': copy_simulation_vehicle,
+        #     'lider': lider,
+        #     'seguidor': seguidor,
+        #     'type_vehicle': vehicleTypes[type_vehicle],
+        #     'speeds': speeds,
+        #     'simulationTime': simulationTime
+        # })
+
+        # # Inicia el hilo
+        # thread.start()
+        presentation_result.exec_all_plots(
+            simulation_vehicle=copy_simulation_vehicle, 
+            lider=lider, 
+            seguidor=seguidor,
+            type_vehicle=vehicleTypes[type_vehicle], 
+            speeds=speeds,
+            simulationTime=simulationTime
+        )
+
+
 class Main:
     global allowedVehicleTypesList
     global peakHour
+    global run_simulation
     i = 0
     # El código itera sobre un diccionario "allowedVehicleTypes" y verifica si el valor de cada clave es
     # Verdadero. Si el valor es Verdadero, agrega la clave correspondiente a `allowedVehicleTypesList`.
@@ -814,9 +864,14 @@ class Main:
     # Cargar las imágenes del botón
     button_image1 = pygame.image.load('images/buttons/buttonGo_small.png')
     button_image2 = pygame.image.load('images/buttons/buttonStop3_small.png')
+    button_info = pygame.image.load('images/buttons/infoBlue.png')
+    button_info = pygame.transform.scale(button_info, (100, 100))
 
     # Coordenadas del botón (parte superior izquierda de la pantalla)
     button_rect = button_image1.get_rect(topleft=(screenWidth - button_image1.get_width(), 0))
+
+    # Coordenadas del boton de informacion
+    button_info_rect = button_info.get_rect(topleft=(screenWidth - button_image1.get_width() - 100, 10))
 
     # Estado del botón
     button_state = 0
@@ -849,13 +904,18 @@ class Main:
     thread3.start()
     def rotate(image, angle: float):
         return pygame.transform.rotate(image, angle)
+    
 
     # Main loop (while mientras el programa este corriendo)
-    while True:
+    while run_simulation:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 showStats()
-                sys.exit()
+                run_simulation = False
+                try:
+                    sys.exit()
+                finally:
+                    show_results()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 # Verificar si el botón fue presionado
                 if button_rect.collidepoint(event.pos):
@@ -864,10 +924,19 @@ class Main:
                     # Ejecutar la función
                     if button_state == 1:
                         peakHour = True
+                        error_message = font.render("No se puede ejecutar la simulación mientras el tráfico está en hora pico.",True,white,black)
+                        screen.blit(error_message, (300, 300))  
+                        pygame.display.flip()  # Actualizar la pantalla
                         Thread_generate_traffic()
                     else:
                         peakHour = False
                         Thread_generate_vehicle()
+                # Verificar si el botón fue presionado
+                elif button_info_rect.collidepoint(event.pos):
+                    # Ejecutar la función
+                    run_simulation = False
+
+                    show_results()
 
         screen.blit(background, (0, 0))   # display background in simulation
         # Mostrar el botón correcto según el estado
@@ -877,6 +946,9 @@ class Main:
         else:
             # display the button
             screen.blit(button_image2, button_rect.topleft)
+
+        # display the button
+        screen.blit(button_info, button_info_rect.topleft)
 
 
 
@@ -934,5 +1006,6 @@ class Main:
         # que se mueva en alguna direccion
         for vehicle in simulation:
             screen.blit(vehicle.image, [vehicle.x, vehicle.y])
+            simulation_vehicle.append(vehicle)
             vehicle.move()
         pygame.display.update()
