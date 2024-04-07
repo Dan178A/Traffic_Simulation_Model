@@ -53,13 +53,13 @@ Necesitas:
 simulationTime = 300
 ```
 
-### Hora Pico:
+### Buttons:
 
->Disabled:
+>Disabled (Hora Pico):
 
 <img src="./images/buttons/buttonGo_small.png" width="115" height="115">
 
->Enabled:
+>Enabled (Hora Pico):
 
 <img src="./images/buttons/buttonStop3_small.png" width="100" height="100">
 
