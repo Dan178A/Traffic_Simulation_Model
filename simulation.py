@@ -4,6 +4,7 @@ import threading
 import pygame
 import sys
 import os
+from module.Result import Presentation_Result
 
 # Valores predeterminados de los temporizadores de señaltemporizadores de señal
 defaultGreen = {

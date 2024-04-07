@@ -1,29 +1,60 @@
+import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import pygame
+import os
 from scipy.integrate import odeint, cumtrapz
 from scipy.interpolate import interp1d
 
 
-class Modulo(object):
+class Presentation_Result(object):
     def __init__(self, tiempo_simulacion: int):
         self.time = tiempo_simulacion
         self.figures = []  # Lista para almacenar las figuras y ejes
-        self.fig, self.axs = plt.subplots(4, 4, figsize=(15, 10)) # Crear una figura con 4 filas y 3 columnas de subgráficos
-        self.current_ax = 0 # Contador para saber en qué subgráfico añadir el siguiente gráfico
-
+        self.vehiculos: dict[str, dict[str, float]] = {
+            "car": {
+                "masa": 1.814,
+                "amortiguamiento": 50,
+                "resorte": 10.0,
+                "posicion": 1,
+                "velocidad": 2.25,
+            },
+            "bus": {
+                "masa": 9.071,
+                "amortiguamiento": 100,
+                "resorte": 20.0,
+                "posicion": 1,
+                "velocidad": 1.8,
+            },
+            "truck": {
+                "masa": 3.629,
+                "amortiguamiento": 150,
+                "resorte": 30.0,
+                "posicion": 1,
+                "velocidad": 1.8,
+            },
+            "bike": {
+                "masa": 250,
+                "amortiguamiento": 30,
+                "resorte": 5000,
+                "posicion": 1,
+                "velocidad": 2.5,
+            },
+        }
 
     def show_all_plots(self):
         # Calcular el número de filas y columnas necesarias
         num_plots = len(self.figures)
-        num_cols = int(len(self.figures)/4)  # Puedes ajustar esto según sea necesario
+        # Puedes ajustar esto según sea necesario
+        num_cols = int(len(self.figures)/4)
         num_rows = num_plots // num_cols
         if num_plots % num_cols:
             num_rows += 1
 
         # Crear una cuadrícula de subgráficos
         # Ajusta el tamaño de la figura según sea necesario
-        _, axs = plt.subplots(num_rows, num_cols, figsize=(15, 8))
+        fig, axs = plt.subplots(num_rows, num_cols, figsize=(13, 8))
 
         # Añadir cada figura a la cuadrícula
         for i, ax in enumerate(self.figures):
@@ -37,34 +68,53 @@ class Modulo(object):
                 line_copy = line.__class__(line.get_xdata(), line.get_ydata(), color=line.get_color(
                 ), linestyle=line.get_linestyle(), linewidth=line.get_linewidth())
                 axs[row, col].add_line(line_copy)
-            axs[row, col].set_xlabel(ax.get_xlabel())
-            axs[row, col].set_ylabel(ax.get_ylabel())
-            axs[row, col].set_title(ax.get_title())
+            for patch in ax.patches:
+                # Crear una copia del parche
+                patch_copy = matplotlib.patches.Rectangle((patch.get_x(), patch.get_y(
+                )), patch.get_width(), patch.get_height(), fill=True, color=patch.get_facecolor())
+                axs[row, col].add_patch(patch_copy)
+            axs[row, col].set_xlabel(ax.get_xlabel(), fontsize=8)
+            axs[row, col].set_ylabel(ax.get_ylabel(), fontsize=8)
+            axs[row, col].set_title(ax.get_title(), fontsize=10)
             axs[row, col].relim()
             axs[row, col].autoscale_view()
 
+            # # Reducir el tamaño de la fuente de los ejes
+            # axs[row, col].tick_params(axis='both', which='major', labelsize=4)
+
         # Ajustar el layout para que los gráficos no se solapen
         plt.tight_layout()
+        # Añadir espacio adicional entre los gráficos
+        # plt.subplots_adjust(wspace=0.5, hspace=0.5)
         # Maximizar la ventana de la figura
         mng = plt.get_current_fig_manager()
         mng.window.showMaximized()
-        plt.savefig('all_plots.png')
+        plt.savefig('graphs/all_plots.png')
         # Mostrar la figura con todos los gráficos
-            # Cerrar todas las otras figuras
-        plt.show()
-        plt.close('all')
-    def add_plot(self, x, y, title):
-        row = self.current_ax // 3
-        col = self.current_ax % 3
-        self.axs[row, col].plot(x, y)
-        self.axs[row, col].set_title(title)
-        self.current_ax += 1
+        plt.close(fig)
+        # Iniciar Pygame
+        pygame.init()
 
-    def show_all_plotsv2(self):
-        plt.tight_layout()
-        plt.show()
+        # Cargar la imagen guardada
+        image = pygame.image.load('graphs/all_plots.png')
 
-    def model_trafic(self):
+        # Crear una ventana del tamaño de la imagen
+        screen = pygame.display.set_mode(
+            (image.get_width(), image.get_height()))
+
+        # Mostrar la imagen
+        screen.blit(image, (0, 0))
+        pygame.display.flip()
+
+        # Mantener la ventana abierta hasta que se cierre
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+        pygame.quit()
+
+    def model_trafic(self, position_lider: float = 50, position_seguidor: float = 40, distance: float = 10, velocity_lider: float = 30, velocity_seguidor: float = 20, acceleration: float = 5):
         # Parámetros del modelo FVADM
         k = 0.1  # Parámetro k
         V1 = 10  # Parámetro V1
@@ -75,15 +125,15 @@ class Modulo(object):
         gamma = 0.1  # Parámetro gamma
 
         # Posiciones de los vehículos
-        x_l = 50  # Posición del vehículo líder
-        x = 40  # Posición del vehículo seguidor
-        l = 10  # Distancia entre vehículos
-        v_l = 30  # Velocidad del vehículo líder
-        v = 20  # Velocidad del vehículo seguidor
-        a = 5  # Aceleración del vehículo
+        x_l = position_lider  # Posición del vehículo líder
+        x = position_seguidor  # Posición del vehículo seguidor
+        l = distance  # Distancia entre vehículos
+        v_l = velocity_lider  # Velocidad del vehículo líder
+        v = velocity_seguidor  # Velocidad del vehículo seguidor
+        a = acceleration  # Aceleración del vehículo
 
         # Función que define la ecuación diferencial FVADM
-        def modelo_FVADM(v, t):
+        def modelo_FVADM(v, _):
             return k * (V1 + V2 * np.tanh((C1 * (x_l - x - l)) / C2) - v) + lambda_ * (v_l - v) + gamma * a
 
         # Tiempo de simulación
@@ -99,14 +149,15 @@ class Modulo(object):
         ax.plot(t, solucion)
         ax.set_xlabel('Tiempo')
         ax.set_ylabel('Velocidad del vehículo seguidor')
-        ax.set_title('Modelo Full Velocity and Acceleration Difference Model')
+        ax.set_title(
+            'Modelo Full Velocity \n and Acceleration Difference Model')
         self.figures.append(ax)
 
-    def calculo_raices(self):
+    def calculo_raices(self, N_vehiculos: int = 220):
         # Constante relacionada con el flujo de tráfico
         C = 75000
         # valor inicial para el flujo de tráfico
-        Q0 = 220
+        Q0 = N_vehiculos
         # Tolerancia para la convergencia
         tolerancia = 1e-6
         # Número máximo de iteraciones
@@ -150,7 +201,7 @@ class Modulo(object):
         ax.set_xlabel('flujo de trafico (Q)')
         ax.set_ylabel('f(Q)')
         ax.set_title(
-            'Metodo de Newton-Raphson para el calculo del trafico vehicular')
+            'Metodo de Newton-Raphson \n para el calculo del trafico vehicular')
         # Activamos la cuadrícula del gráfico
         ax.grid(True)
         # Mostramos el gráfico
@@ -179,23 +230,25 @@ class Modulo(object):
         ax.set_ylabel('Tráfico vehicular')
         ax.set_title('Regresión lineal de tráfico vehicular')
         ax.legend(['Datos', 'Linea de regresion'],
-                  loc='upper right')  # Corrección aquí
+                  loc='upper right')
         ax.grid(True)
 
         self.figures.append(ax)
 
-    def derivada_velocidad_aceleracion(self):
+    def derivada_velocidad_aceleracion(self, speeds: list = [2.25, 1.8, 1.8, 2.5]):
+
         # Datos de tiempo y velocidad
-        tiempo = np.array([0, 2, 4, 6, 8, 10])
-        velocidad = np.array([0, 10, 20, 30, 40, 50])
+        tiempo = np.linspace(0, self.time, 4)
+        # de m/s a km/s
+        velocidad = np.array([speed * 50 for speed in speeds])
 
         # Interpolación de la velocidad
-        tiempo_interp = np.arange(0, 10.1, 0.1)
+        tiempo_interp = np.arange(0, tiempo[-1], 0.1)
         f = interp1d(tiempo, velocidad, kind='cubic')
         velocidad_interp = f(tiempo_interp)
 
         # Extrapolación de la velocidad
-        tiempo_extrap = np.arange(0, 12.1, 0.1)
+        tiempo_extrap = np.arange(0, velocidad[0], 0.1)
         f = interp1d(tiempo, velocidad, kind='cubic', fill_value="extrapolate")
         velocidad_extrap = f(tiempo_extrap)
 
@@ -204,7 +257,7 @@ class Modulo(object):
         aceleracion_extrap = np.diff(velocidad_extrap) / np.diff(tiempo_extrap)
 
         # Crear la figura y los ejes
-        fig, axs = plt.subplots(2, 1)  # Corrección aquí
+        fig, axs = plt.subplots(2, 1)
 
         # Gráficos
         axs[0].plot(tiempo, velocidad, 'o', tiempo_interp,
@@ -226,53 +279,51 @@ class Modulo(object):
         for ax in np.ravel(axs):
             self.figures.append(ax)
 
-    def Acumulacion_integrales(self):
+    def Acumulacion_integrales(self, vehicleClass: str = "car"):
         # Rango de tiempo
         t = np.arange(0, self.time, 0.1)
 
+        velocidad_vehiculo = self.vehiculos[vehicleClass]["velocidad"]
         # Velocidad de los vehículos A y B
-        v_A = 3*t
-        v_B = 3*t + 4
+        v_A = velocidad_vehiculo*t
+        v_B = velocidad_vehiculo*t + 4
 
         # Desplazamiento utilizando integración numérica
         s_A = cumtrapz(v_A, t, initial=0)
         s_B = cumtrapz(v_B, t, initial=0)
         # Crear la figura y los ejes
-        fig, axs = plt.subplots(2, 1)  # Corrección aquí
+        fig, axs = plt.subplots(2, 1)
 
         # Graficar Velocidad vs. Tiempo
-        axs[0].plot(t, v_A, 'b-', t, v_B, 'r--')  # Corrección aquí
-        axs[0].legend(['Velocidad A', 'Velocidad B'])  # Corrección aquí
-        axs[0].set_title('Velocidad vs. Tiempo')  # Corrección aquí
-        axs[0].set_xlabel('Tiempo (s)')  # Corrección aquí
-        axs[0].set_ylabel('Velocidad (m/s)')  # Corrección aquí
+        axs[0].plot(t, v_A, 'b-', t, v_B, 'r--')
+        axs[0].legend(['Velocidad A', 'Velocidad B'])
+        axs[0].set_title('Velocidad vs. Tiempo')
+        axs[0].set_xlabel('Tiempo (s)')
+        axs[0].set_ylabel('Velocidad (m/s)')
 
         # Graficar Desplazamiento vs. Tiempo
-        axs[1].plot(t, s_A, 'b-', t, s_B, 'r--')  # Corrección aquí
-        # Corrección aquí
+        axs[1].plot(t, s_A, 'b-', t, s_B, 'r--')
+
         axs[1].legend(['Desplazamiento A', 'Desplazamiento B'])
-        axs[1].set_title('Desplazamiento vs. Tiempo')  # Corrección aquí
-        axs[1].set_xlabel('Tiempo (s)')  # Corrección aquí
-        axs[1].set_ylabel('Desplazamiento (m)')  # Corrección aquí
+        axs[1].set_title('Desplazamiento vs. Tiempo')
+        axs[1].set_xlabel('Tiempo (s)')
+        axs[1].set_ylabel('Desplazamiento (m)')
 
         fig.tight_layout()
         # Aplanar axs y agregar cada objeto AxesSubplot a self.figures
         for ax in np.ravel(axs):
             self.figures.append(ax)
 
-    def Trazado_trayectorias(self):
-        tiempo_final = 30  # segundos
-        dt = 0.1
+    def Trazado_trayectorias(self, vehiculo1: tuple[float, float, float] = (0, 0, 3), vehiculo2: tuple[float, float, float] = (0, 0, 1.5)):
 
+        tiempo_final = self.time  # segundos
+        dt = 0.1
         # condiciones iniciales para el vehiculo1
-        posicion1 = 0
-        velocidad1 = 0
-        aceleracion1 = 3
+
+        posicion1, velocidad1, aceleracion1 = vehiculo1
 
         # condiciones iniciales para el vehiculo2
-        posicion2 = 0
-        velocidad2 = 0
-        aceleracion2 = 1.5
+        posicion2, velocidad2, aceleracion2 = vehiculo2
         # Crear la figura y los ejes
         ax = plt.Axes(fig=plt.figure(), rect=[0, 0, 1, 1])
 
@@ -309,18 +360,21 @@ class Modulo(object):
         ax.legend(['Vehiculo 1', 'Vehiculo 2'])
         self.figures.append(ax)
 
-    def Trapecio(self):
+    def Trapecio(self, vehiculeClass: str = "car"):
         # Definir el tiempo de 0 a 300 segundos
-        t = np.arange(0, 300, 0.1)
+        t = np.arange(0, self.time, 0.1)
 
-        # Definir la función de velocidad
-        v = 4*t - 2
+        # Velocidad del vehículo
+        velocidad_vehiculo = self.vehiculos[vehiculeClass]["velocidad"]
+
+        # Definir la función de velocidad en m/s
+        v = velocidad_vehiculo*t - 2
 
         # Desplazamiento
         desplazamiento = np.trapz(v, t) / 1000  # km
 
         # Velocidad absoluta
-        v_abs = np.abs(4*t - 2)
+        v_abs = np.abs(v)
 
         # Distancia total
         distancia_total = np.trapz(v_abs, t) / 1000  # km
@@ -336,15 +390,21 @@ class Modulo(object):
         ax.set_title('Desplazamiento y Distancia Total Recorrida')
         self.figures.append(ax)
 
-    def Masa_amortiguador(self):
+    def Masa_amortiguador(self, vehicleClass: str = "car"):
+
+        masa = self.vehiculos[vehicleClass]["masa"]
+        amortiguamiento = self.vehiculos[vehicleClass]["amortiguamiento"]
+        resorte = self.vehiculos[vehicleClass]["resorte"]
+        posicion = self.vehiculos[vehicleClass]["posicion"]
+        velocidad = self.vehiculos[vehicleClass]["velocidad"]
         # parametros del sistema
-        m = 1000  # masa (kg)
-        b = 0.5  # coeficiente de amortiguamiento (Ns/m)
-        k = 200  # constante del resorte (N/m)
+        m = masa  # masa (kg)
+        b = amortiguamiento  # coeficiente de amortiguamiento (Ns/m)
+        k = resorte  # constante del resorte (N/m)
 
         # Condiciones Iniciales
-        x0 = 1  # posicion inicial
-        v0 = 0  # Velocidad inicial (m/s)
+        x0 = posicion  # posicion inicial
+        v0 = velocidad  # Velocidad inicial (m/s)
 
         # Tiempo de Simulacion
         t = np.linspace(0, self.time, 1000)  # desde t=0 hasta t=10
@@ -359,36 +419,42 @@ class Modulo(object):
         y0 = [x0, v0]
         sol = odeint(ode, y0, t, args=(b, k, m))
         # Crear la figura y los ejes
-        fig, axs = plt.subplots(2, 1)  # Corrección aquí
+        fig, axs = plt.subplots(2, 1)
 
         # Visualizacion de la posicion en funcion del tiempo
         axs[0].plot(t, sol[:, 0], 'b', linewidth=2)
         axs[0].set_xlabel('Tiempo (s)')
         axs[0].set_ylabel('Posicion (m)')
         axs[0].set_title(
-            "Posicion vs Tiempo del Sistema Masa-Resorte-Amortiguador")
+            "Posicion vs Tiempo del Sistema \n Masa-Resorte-Amortiguador")
 
         # Visualizacion de la velocidad en funcion del tiempo
         axs[1].plot(t, sol[:, 1], 'b', linewidth=2)
         axs[1].set_xlabel('Tiempo (s)')
         axs[1].set_ylabel('Velocidad (m/s)')
         axs[1].set_title(
-            "Velocidad vs Tiempo del Sistema Masa-Resorte-Amortiguador")
+            "Velocidad vs Tiempo del Sistema \n Masa-Resorte-Amortiguador")
 
         fig.tight_layout()
         # Aplanar axs y agregar cada objeto AxesSubplot a self.figures
         for ax in np.ravel(axs):
             self.figures.append(ax)
 
-    def analogia_masa_amortiguador(self):
+    def analogia_masa_amortiguador(self, vehicleClass: str = "car"):
+
+        masa = self.vehiculos[vehicleClass]["masa"]
+        amortiguamiento = self.vehiculos[vehicleClass]["amortiguamiento"]
+        resorte = self.vehiculos[vehicleClass]["resorte"]
+        posicion = self.vehiculos[vehicleClass]["posicion"]
+        velocidad = self.vehiculos[vehicleClass]["velocidad"]
         # Parámetros del sistema
-        m = 1350  # masa (kg)
-        c = 600  # coeficiente de amortiguamiento (Ns/m)
-        k = 1500  # constante del resorte (N/m)
+        m = masa  # masa (kg)
+        c = amortiguamiento  # coeficiente de amortiguamiento (Ns/m)
+        k = resorte  # constante del resorte (N/m)
 
         # Condiciones iniciales
-        x0 = 0  # posición inicial
-        v0 = 20  # velocidad inicial (m/s)
+        x0 = posicion  # posición inicial
+        v0 = velocidad  # velocidad inicial (m/s)
 
         # Definición de las ecuaciones de movimiento
         def vehicle_dynamics(x, t, m, c, k):
@@ -406,7 +472,7 @@ class Modulo(object):
         sol = odeint(vehicle_dynamics, y0, t, args=(
             m, c, k), atol=1e-9, rtol=1e-6)
         # Crear la figura y los ejes
-        fig, axs = plt.subplots(2, 1)  # Corrección aquí
+        fig, axs = plt.subplots(2, 1)
 
         # Visualización de la posición en función del tiempo
         axs[0].plot(t, sol[:, 0])
@@ -425,11 +491,11 @@ class Modulo(object):
         for ax in np.ravel(axs):
             self.figures.append(ax)
 
-    def Teorias_colas_simples(self):
+    def Teorias_colas_simples(self, Numero_vehiculos: int = 10):
         # Parámetros del sistema
         _lambda = 4  # Tasa de llegada de vehículos
         mu = 5  # Tasa de servicio
-        k = 10  # Número máximo de vehículos en el sistema
+        k = Numero_vehiculos  # Número máximo de vehículos en el sistema
 
         # Probabilidad de que el sistema esté en estado i
         pi = np.zeros(k+1)
@@ -452,7 +518,7 @@ class Modulo(object):
         ax.set_xlabel('Número de vehículos en el sistema')
         ax.set_ylabel('Probabilidad')
         ax.set_title(
-            'Distribución de probabilidad del número de vehículos en el sistema')
+            'Distribución de probabilidad \n del número de vehículos en el sistema')
         self.figures.append(ax)
 
         # Imprimir estadísticas
@@ -460,12 +526,12 @@ class Modulo(object):
         print(
             f'Probabilidad de que un vehículo que llega tenga que esperar: {P_wait:.2f}')
 
-    def Teorias_colas_multiples(self):
+    def Teorias_colas_multiples(self, Numero_vehiculos: int = 10):
         # Parámetros del sistema
         _lambda = 6  # Tasa de llegada de vehículos
         mu = 5  # Tasa de servicio
         c = 4  # Número de servidores
-        K = 10  # Número máximo de vehículos en el sistema
+        K = Numero_vehiculos  # Número máximo de vehículos en el sistema
 
         # Probabilidad de que el sistema esté en estado i
         pi = np.zeros(K+1)
@@ -490,7 +556,7 @@ class Modulo(object):
         ax.set_xlabel('Número de vehículos en el sistema')
         ax.set_ylabel('Probabilidad')
         ax.set_title(
-            'Distribución de probabilidad del número de vehículos en el sistema')
+            'Distribución de probabilidad  \ndel número de vehículos en el sistema')
         self.figures.append(ax)
 
         # Imprimir estadísticas
@@ -498,12 +564,12 @@ class Modulo(object):
         print(
             f'Probabilidad de que un vehículo que llega tenga que esperar: {P_wait:.2f}')
 
-    def Monte_Carlo(self):
+    def Monte_Carlo(self, simulaciones: int = 1000):
         # Parámetros
         lambda_ = 2  # media de tiempo entre llegadas, en minutos
         mu = 1  # media de tiempo de servicio, en minutos
         sigma = 0.5  # desviación estándar del tiempo de servicio en minutos
-        N = 1000  # número de simulaciones
+        N = simulaciones  # número de simulaciones
 
         tiempo_espera = np.zeros(N)
 
@@ -531,12 +597,12 @@ class Modulo(object):
         ax.set_xlabel('Tiempo Medio de espera (Minutos)')
         ax.set_ylabel('Frecuencia')
         ax.set_title(
-            'Distribución del tiempo medio de espera en la interacción')
+            'Distribución del tiempo \n medio de espera en la interacción')
         self.figures.append(ax)
 
 
 if __name__ == '__main__':
-    modulo = Modulo(10)
+    modulo = Presentation_Result(300)
     modulo.model_trafic()
     modulo.calculo_raices()
     modulo.ajuste_curvas()
