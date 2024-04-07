@@ -801,7 +801,7 @@ def Thread_generate_vehicle():
 
 def show_results():
     """
-    La función `show_results` en Python imprime un mensaje en la consola cuando se presiona el botón.
+    La función `show_results` en Python muestra los resultados de la simulación en una ventana emergente.
     """
     
     copy_simulation_vehicle = simulation_vehicle.copy()
@@ -812,18 +812,6 @@ def show_results():
         seguidor = lider - 1
         type_vehicle = random.choice(allowedVehicleTypesList)
 
-        # Presentacion de resultados
-        # thread = threading.Thread(target=presentation_result.exec_all_plots, kwargs={
-        #     'simulation_vehicle': copy_simulation_vehicle,
-        #     'lider': lider,
-        #     'seguidor': seguidor,
-        #     'type_vehicle': vehicleTypes[type_vehicle],
-        #     'speeds': speeds,
-        #     'simulationTime': simulationTime
-        # })
-
-        # # Inicia el hilo
-        # thread.start()
         presentation_result.exec_all_plots(
             simulation_vehicle=copy_simulation_vehicle, 
             lider=lider, 
@@ -924,9 +912,6 @@ class Main:
                     # Ejecutar la función
                     if button_state == 1:
                         peakHour = True
-                        error_message = font.render("No se puede ejecutar la simulación mientras el tráfico está en hora pico.",True,white,black)
-                        screen.blit(error_message, (300, 300))  
-                        pygame.display.flip()  # Actualizar la pantalla
                         Thread_generate_traffic()
                     else:
                         peakHour = False
