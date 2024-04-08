@@ -1,5 +1,5 @@
-import matplotlib
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import pygame
 import time
@@ -10,6 +10,12 @@ from scipy.interpolate import interp1d
 
 class Presentation_Result(object):
     def __init__(self, tiempo_simulacion: int):
+        """
+            Inicializa la clase `Presentation_Result` con el tiempo de simulación.
+
+            Args:
+                tiempo_simulacion (int): Tiempo de simulación en segundos
+        """
         self.time = tiempo_simulacion
         self.figures = []  # Lista para almacenar las figuras y ejes
         self.vehiculos: dict[str, dict[str, float]] = {
@@ -44,6 +50,9 @@ class Presentation_Result(object):
         }
 
     def show_all_plots(self):
+        """
+            Muestra todas las figuras en una sola ventana.
+        """
         # Calcular el número de filas y columnas necesarias
         num_plots = len(self.figures)
         # Puedes ajustar esto según sea necesario
@@ -84,8 +93,6 @@ class Presentation_Result(object):
 
         # Ajustar el layout para que los gráficos no se solapen
         plt.tight_layout()
-        # Añadir espacio adicional entre los gráficos
-        # plt.subplots_adjust(wspace=0.5, hspace=0.5)
         # Maximizar la ventana de la figura
         mng = plt.get_current_fig_manager()
         mng.window.showMaximized()
@@ -116,6 +123,16 @@ class Presentation_Result(object):
         pygame.quit()
 
     def model_trafic(self, position_lider: float = 50, position_seguidor: float = 40, velocity_lider: float = 30, velocity_seguidor: float = 20):
+        """
+            La función `model_trafic` simula el modelo de tráfico FVADM y traza la velocidad del vehículo seguidor en función del tiempo.
+
+            Args:
+                position_lider (float): Posición del vehículo líder
+                position_seguidor (float): Posición del vehículo seguidor
+                velocity_lider (float): Velocidad del vehículo líder
+                velocity_seguidor (float): Velocidad del vehículo seguidor
+        """
+
         # Parámetros del modelo FVADM
         k = 0.1  # Parámetro k
         V1 = 10  # Parámetro V1
@@ -197,8 +214,6 @@ class Presentation_Result(object):
 
         # Generamos un conjunto de valores de Q para graficar
         Q_vals = np.linspace(0, self.time, 400)
-        # Crear la figura y los ejes
-        # fig, ax = plt.subplots()
         # Crear los ejes
         ax = plt.Axes(fig=plt.figure(), rect=[0, 0, 1, 1])
         # Graficamos f(Q) en función de Q
