@@ -2,6 +2,7 @@
 
 
 <img src="/images/output.gif" width="100%" height="100%">
+
 ## Description
 
 Modelo de simulación de tráfico vehicular que se asemeja a un modelo macroscópico de simulación de tráfico vehicular. Este modelo se centra en la simulación de la interacción entre vehículos y señales de tráfico en una intersección, utilizando un enfoque macroscópico para representar el comportamiento del tráfico a nivel de la intersección.
